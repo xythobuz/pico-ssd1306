@@ -3,6 +3,7 @@
 MIT License
 
 Copyright (c) 2021 David Schramm
+Copyright (c) 2024 Thomas Buck <thomas@xythobuz.de>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +29,21 @@ SOFTWARE.
 #include <pico/binary_info.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "ssd1306.h"
 #include "font.h"
+
+#ifdef SSD1306_DEBUG_PRINT
+#include SSD1306_DEBUG_INCLUDE
+#define debug_log(...) SSD1306_DEBUG_PRINT(__VA_ARGS__)
+#else
+#ifndef SSD1306_NO_DEBUG_PRINT
+#include <stdio.h>
+#define debug_log(...) printf(__VA_ARGS__)
+#else
+#define debug_log(...)
+#endif // SSD1306_NO_DEBUG_PRINT
+#endif // SSD1306_DEBUG_PRINT
 
 inline static void swap(int32_t *a, int32_t *b) {
     int32_t *t=a;
@@ -42,13 +54,13 @@ inline static void swap(int32_t *a, int32_t *b) {
 inline static void fancy_write(i2c_inst_t *i2c, uint8_t addr, const uint8_t *src, size_t len, char *name) {
     switch(i2c_write_blocking(i2c, addr, src, len, false)) {
     case PICO_ERROR_GENERIC:
-        printf("[%s] addr not acknowledged!\n", name);
+        debug_log("[%s] addr not acknowledged!\n", name);
         break;
     case PICO_ERROR_TIMEOUT:
-        printf("[%s] timeout!\n", name);
+        debug_log("[%s] timeout!\n", name);
         break;
     default:
-        //printf("[%s] wrote successfully %lu bytes!\n", name, len);
+        //debug_log("[%s] wrote successfully %lu bytes!\n", name, len);
         break;
     }
 }
