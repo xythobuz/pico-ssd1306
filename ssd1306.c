@@ -45,29 +45,33 @@ SOFTWARE.
 #endif // SSD1306_NO_DEBUG_PRINT
 #endif // SSD1306_DEBUG_PRINT
 
+#define CHK_RET(x) if (!(x)) { return false; }
+
 inline static void swap(int32_t *a, int32_t *b) {
     int32_t *t=a;
     *a=*b;
     *b=*t;
 }
 
-inline static void fancy_write(i2c_inst_t *i2c, uint8_t addr, const uint8_t *src, size_t len, char *name) {
+inline static bool fancy_write(i2c_inst_t *i2c, uint8_t addr, const uint8_t *src, size_t len, char *name) {
     switch(i2c_write_blocking(i2c, addr, src, len, false)) {
     case PICO_ERROR_GENERIC:
         debug_log("[%s] addr not acknowledged!\n", name);
-        break;
+        return false;
+
     case PICO_ERROR_TIMEOUT:
         debug_log("[%s] timeout!\n", name);
-        break;
+        return false;
+
     default:
         //debug_log("[%s] wrote successfully %lu bytes!\n", name, len);
-        break;
+        return true;
     }
 }
 
-inline static void ssd1306_write(ssd1306_t *p, uint8_t val) {
+inline static bool ssd1306_write(ssd1306_t *p, uint8_t val) {
     uint8_t d[2]= {0x00, val};
-    fancy_write(p->i2c_i, p->address, d, 2, "ssd1306_write");
+    return fancy_write(p->i2c_i, p->address, d, 2, "ssd1306_write");
 }
 
 bool ssd1306_init(ssd1306_t *p, uint16_t width, uint16_t height, uint8_t address, i2c_inst_t *i2c_instance) {
@@ -122,7 +126,7 @@ bool ssd1306_init(ssd1306_t *p, uint16_t width, uint16_t height, uint8_t address
     };
 
     for(size_t i=0; i<sizeof(cmds); ++i)
-        ssd1306_write(p, cmds[i]);
+        CHK_RET(ssd1306_write(p, cmds[i]));
 
     return true;
 }
